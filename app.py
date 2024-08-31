@@ -1,26 +1,16 @@
 import streamlit as st
-import pyttsx3
-from pydub import AudioSegment
+from gtts import gTTS
 import io
-import os
-
-# Initialize the text-to-speech engine
-engine = pyttsx3.init()
 
 def text_to_speech(text):
-    # Ensure the audio directory exists
-    audio_dir = "audio"
-    if not os.path.exists(audio_dir):
-        os.makedirs(audio_dir)
+    tts = gTTS(text=text, lang='en')
     
-    # Save the speech to an audio file
-    audio_path = os.path.join(audio_dir, "output.wav")
-    engine.save_to_file(text, audio_path)
-    engine.runAndWait()
+    # Save the speech to an in-memory file
+    audio_buffer = io.BytesIO()
+    tts.write_to_fp(audio_buffer)
+    audio_buffer.seek(0)
     
-    # Load the audio file and return it
-    audio = AudioSegment.from_wav(audio_path)
-    return audio
+    return audio_buffer
 
 # Streamlit app setup
 st.title("Simple Text to Speech Converter")
@@ -30,12 +20,10 @@ text_input = st.text_area("Enter the text you want to convert to speech")
 if st.button("Convert"):
     if text_input.strip():
         st.write("Generating speech...")
-        audio = text_to_speech(text_input)
+        audio_buffer = text_to_speech(text_input)
         
-        # Convert audio to a format Streamlit can handle
-        with io.BytesIO() as audio_buffer:
-            audio.export(audio_buffer, format="wav")
-            st.audio(audio_buffer, format="audio/wav")
+        # Display the audio player in Streamlit
+        st.audio(audio_buffer, format="audio/mp3")
         
         st.success("Speech generated and played successfully!")
     else:
